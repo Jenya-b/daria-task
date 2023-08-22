@@ -1,11 +1,14 @@
-import React, { useEffect, CSSProperties } from 'react';
+import React, { useEffect, CSSProperties, MouseEvent } from 'react';
 import { useAppDispatch, useAppSelector } from './store';
 import { loadData } from './store/app/thunks';
 import { List } from './components/List';
+import { setSelected } from './store/app/slice';
 
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isDataLoaded, elements } = useAppSelector((state) => state.app);
+  const { isDataLoaded, elements, selected } = useAppSelector(
+    (state) => state.app
+  );
 
   useEffect(() => {
     dispatch(loadData()).unwrap();
@@ -14,7 +17,34 @@ export const App: React.FC = () => {
   const renderItem: React.FC<{ index: number; style: CSSProperties }> = ({
     index,
     style,
-  }) => <div style={style}>{elements[index]}</div>;
+  }) => {
+    const handleClick = (event: MouseEvent<HTMLDivElement>): void => {
+      const { id } = event.currentTarget;
+
+      if (event.shiftKey && selected.includes(id)) {
+        dispatch(setSelected(selected.filter((item) => item !== id)));
+      } else if (event.shiftKey) {
+        dispatch(setSelected([...selected, id]));
+      } else if (selected.includes(id)) {
+        dispatch(setSelected([]));
+      } else {
+        dispatch(setSelected([id]));
+      }
+    };
+
+    return (
+      <div
+        onClick={handleClick}
+        id={String(index)}
+        style={{
+          background: `${selected.includes(String(index)) ? 'silver' : 'none'}`,
+          ...style,
+        }}
+      >
+        {elements[index]}
+      </div>
+    );
+  };
 
   return (
     <div style={{ height: '100%' }}>
